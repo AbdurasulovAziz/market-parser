@@ -8,6 +8,8 @@ from gspread_formatting import format_cell_range, Color, TextFormat, CellFormat,
 
 load_dotenv()
 
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+
 # --- Настройки колонок (под твою схему A:G, id заказа в колонке F) ---
 DATE_COL = "A"
 TITLE_COL = "B"
@@ -210,6 +212,6 @@ def sync_orders_to_sheet(
 
 def run(orders):
     for date in orders:
-        ws = open_worksheet("credentials.json", date)
+        ws = open_worksheet(f"{CURRENT_DIR}/credentials.json", date)
         setup_status_conditional_formatting(ws)
         sync_orders_to_sheet(ws=ws, orders_by_id=orders[date], data_range="A2:G")
