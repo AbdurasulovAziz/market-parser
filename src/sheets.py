@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 from gspread_formatting import format_cell_range, Color, TextFormat, CellFormat, set_frozen, \
     get_conditional_format_rules, ConditionalFormatRule, BooleanRule, BooleanCondition, GridRange
 
+from wb_integration import STATUSES
+
 load_dotenv()
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -20,6 +22,7 @@ ORDER_ID_COL = "F"
 STATUS_COL = "G"
 
 ID_COL_INDEX_ZERO_BASED = 5  # F в диапазоне A:G -> индекс 5
+ID_COL_STATUS = 6
 
 HEADERS = [
     "Дата",
@@ -195,6 +198,20 @@ def append_new_rows(ws, orders_by_id: Dict[int, Dict[str, Any]], chunk_size: int
             value_input_option="USER_ENTERED",
         )
 
+def remove_rows_with_status(ws, statuses: set):
+    rows = ws.get_all_values()
+
+    header = rows[0]
+
+    filtered_rows = [header]
+
+    for row in rows[1:]:
+        if row[6] not in statuses:
+            filtered_rows.append(row)
+
+    ws.clear()
+    ws.update(filtered_rows)
+
 
 def sync_orders_to_sheet(
     *,
@@ -205,10 +222,15 @@ def sync_orders_to_sheet(
     """
     1) Обновить существующие строки по order_id (колонка F)
     2) Добавить новые строки (остаток dict)
+    3) Удаляем ненужные строки по статусам
     """
     updates, remaining = build_updates_from_sheet(ws, orders_by_id, data_range=data_range)
     apply_updates(ws, updates)
     append_new_rows(ws, remaining)
+    remove_rows_with_status(
+        ws,
+        {STATUSES['canceled'], STATUSES['canceled_by_client'], STATUSES['declined_by_client']},
+    )
 
 def run(orders):
     for date in orders:
