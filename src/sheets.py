@@ -229,7 +229,7 @@ def sync_orders_to_sheet(
     append_new_rows(ws, remaining)
     remove_rows_with_status(
         ws,
-        {STATUSES['canceled'], STATUSES['canceled_by_client'], STATUSES['declined_by_client']},
+        {STATUSES['canceled'], STATUSES['declined_by_client']},
     )
 
 def run(orders):
