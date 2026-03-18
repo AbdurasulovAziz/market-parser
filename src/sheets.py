@@ -21,6 +21,7 @@ SOURCE_COL = "E"
 ORDER_ID_COL = "F"
 STATUS_COL = "G"
 
+ID_COL_DATE = 1
 ID_COL_INDEX_ZERO_BASED = 5  # F в диапазоне A:G -> индекс 5
 ID_COL_STATUS = 6
 
@@ -109,19 +110,6 @@ def open_worksheet(credentials_path: str, sheet_name: str):
 
     return get_or_create_worksheet(sh, sheet_name)
 
-
-def safe_int(value: Any) -> Optional[int]:
-    if value is None:
-        return None
-    s = str(value).strip()
-    if not s:
-        return None
-    try:
-        return int(s)
-    except ValueError:
-        return None
-
-
 def build_row(payload: Dict[str, Any]) -> List[Any]:
     """Строка под A:G."""
     return [
@@ -129,7 +117,7 @@ def build_row(payload: Dict[str, Any]) -> List[Any]:
         payload.get("title", ""),
         payload.get("article", ""),
         str(payload.get("price", "")),
-        "Wildberries",
+        payload.get("platform", ""),
         payload.get("id", ""),
         payload.get("status", ""),
     ]
@@ -160,7 +148,7 @@ def build_updates_from_sheet(
         if len(row) <= id_index:
             continue
 
-        order_id = safe_int(row[id_index])
+        order_id = row[id_index]
         if order_id is None:
             continue
 
@@ -229,8 +217,12 @@ def sync_orders_to_sheet(
     append_new_rows(ws, remaining)
     remove_rows_with_status(
         ws,
-        {STATUSES['canceled'], STATUSES['declined_by_client']},
+        {"Отменено", "Покупатель отказался", "Отменен"},
     )
+
+    last_row = len(ws.get_all_values())
+
+    ws.sort((ID_COL_DATE, 'asc'), range=f'A2:Z{last_row}')
 
 def run(orders):
     for date in orders:
