@@ -14,11 +14,11 @@ HEADERS = {
 }
 
 OZON_STATUSES = {
-    "awaiting_packaging": "Ожидает сборки",
-    "awaiting_deliver": "Ожидает отгрузки",
-    "delivering": "Доставляется",
-    "delivered": "Доставлен",
-    "cancelled": "Отменен"
+    ("awaiting_packaging", "posting_created"): "Ожидает сборки",
+    ("delivering", "posting_on_way_to_city"): "Условно доставлен",
+    ("delivering", "posting_in_pickup_point"): "Ждет покупателя в ПВЗ",
+    ("delivering", "posting_conditionally_delivered"): "Доставляется",
+    ("delivered", "posting_received"): "Доставлен",
 }
 
 # --- генератор диапазонов дат ---
@@ -100,10 +100,18 @@ def group_by_month(orders):
             "price": str(float(first_product["price"])),
             "platform": "Ozon",
             "created_at": dt_obj.strftime("%d.%m.%Y"),
-            "status": OZON_STATUSES[order["status"]]
+            "status": get_order_status(order)
         }
 
     return grouped
+
+def get_order_status(order):
+    if order["status"] == "cancelled" and order['substatus'] == "posting_canceled" and order["cancellation"]["cancelled_after_ship"]:
+        return "Отменено после отгрузки"
+    elif order["status"] == "cancelled" and order['substatus'] == "posting_canceled" and not order["cancellation"]["cancelled_after_ship"]:
+        return "Отменено до отгрузки"
+    else:
+        return OZON_STATUSES[order["status"], order["substatus"]]
 
 def process():
     orders = fetch_fbs_orders_by_month()

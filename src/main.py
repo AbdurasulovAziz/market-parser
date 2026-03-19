@@ -17,4 +17,4 @@ if __name__ == "__main__":
             wb_orders[month] = orders
 
     wb_orders = dict(sorted(wb_orders.items(), reverse=True))
-    run(wb_orders)
+    run(ozon_orders)
