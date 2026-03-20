@@ -15,9 +15,9 @@ HEADERS = {
 
 OZON_STATUSES = {
     ("awaiting_packaging", "posting_created"): "Ожидает сборки",
-    ("delivering", "posting_on_way_to_city"): "Условно доставлен",
+    ("delivering", "posting_on_way_to_city"): "Доставляется",
     ("delivering", "posting_in_pickup_point"): "Ждет покупателя в ПВЗ",
-    ("delivering", "posting_conditionally_delivered"): "Доставляется",
+    ("delivering", "posting_conditionally_delivered"): "Условно доставлен",
     ("delivered", "posting_received"): "Доставлен",
 }
 
@@ -97,7 +97,7 @@ def group_by_month(orders):
             "id": str(order["order_number"]),
             "title": first_product.get("name"),
             "article": str(first_product.get("offer_id")),
-            "price": str(float(first_product["price"])),
+            "price": str(float(first_product["price"]) * first_product["quantity"]),
             "platform": "Ozon",
             "created_at": dt_obj.strftime("%d.%m.%Y"),
             "status": get_order_status(order)
@@ -106,9 +106,9 @@ def group_by_month(orders):
     return grouped
 
 def get_order_status(order):
-    if order["status"] == "cancelled" and order['substatus'] == "posting_canceled" and order["cancellation"]["cancelled_after_ship"]:
+    if order["status"] == "cancelled" and order['substatus'] == "posting_canceled" and order["delivering_date"]:
         return "Отменено после отгрузки"
-    elif order["status"] == "cancelled" and order['substatus'] == "posting_canceled" and not order["cancellation"]["cancelled_after_ship"]:
+    elif order["status"] == "cancelled" and order['substatus'] == "posting_canceled" and not order['delivering_date']:
         return "Отменено до отгрузки"
     else:
         return OZON_STATUSES[order["status"], order["substatus"]]
