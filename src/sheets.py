@@ -226,7 +226,7 @@ def sync_orders_to_sheet(
     append_new_rows(ws, remaining)
     remove_rows_with_status(
         ws,
-        {"Отменено", "Покупатель отказался", "Отменено до отгрузки"},
+        {"Отменено", "Отменено до отгрузки"},
     )
 
     last_row = len(ws.get_all_values())
