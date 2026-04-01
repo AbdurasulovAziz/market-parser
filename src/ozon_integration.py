@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 import requests
 from dotenv import load_dotenv
 
+from utils import generate_month_ranges
+
 load_dotenv()
 
 API_URL = "https://api-seller.ozon.ru/v3/posting/fbs/list"
@@ -21,25 +23,6 @@ OZON_STATUSES = {
     ("delivered", "posting_received"): "Доставлен",
 }
 
-# --- генератор диапазонов дат ---
-def generate_month_ranges(months=3):
-    now = datetime.now(timezone.utc)
-
-    for i in range(months):
-        # вычисляем первый день месяца
-        first_day = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        for _ in range(i):
-            # идём в предыдущий месяц
-            first_day = (first_day - timedelta(days=1)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-        # последний день месяца
-        last_day = (first_day.replace(day=28) + timedelta(days=4))  # всегда переходит в следующий месяц
-        last_day = (last_day - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=0)
-
-        yield (
-            first_day.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            last_day.strftime("%Y-%m-%dT%H:%M:%SZ")
-        )
 
 
 # --- загрузка заказов ---

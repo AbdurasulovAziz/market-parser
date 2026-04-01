@@ -1,12 +1,15 @@
+import os
 from datetime import datetime, timedelta, timezone
 
 import requests
 from dotenv import load_dotenv
 
+from utils import generate_month_ranges
+
 load_dotenv()
 
 HEADERS = {
-    "Api-Key": "ACMA:IH9T32o3LoTtpEzLjRedsIOQKr1MNZeM8LLhkJUN:cbd220ec",
+    "Api-Key": os.environ.get("YANDEX_API_KEY"),
     "Content-Type": "application/json"
 }
 
@@ -14,39 +17,25 @@ YANDEX_STATUSES = {
     "PROCESSING": "Обрабатывается",
     "DELIVERY": "Доставляется",
     "DELIVERED": "Доставлен",
-    "CANCELLED": "Отменен",
+    "CANCELLED": "Отменено",
 }
 
-CAMPAIGN_ID = 728449
+CAMPAIGN_ID = os.environ.get("YANDEX_BUSINESS_ID")
 
 API_URL = f"https://api.partner.market.yandex.ru/v1/businesses/{CAMPAIGN_ID}/orders"
-
-def generate_month_ranges(months=3):
-    now = datetime.now(timezone.utc)
-
-    for i in range(months):
-        first_day = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        for _ in range(i):
-            first_day = (first_day - timedelta(days=1)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-
-        last_day = (first_day.replace(day=28) + timedelta(days=4))
-        last_day = (last_day - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=0)
-
-        yield (
-            first_day.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            last_day.strftime("%Y-%m-%dT%H:%M:%SZ")
-        )
-
 
 def fetch_orders_by_month():
     all_orders = []
     for since, to in generate_month_ranges(3):
         params = {
             "limit": 50,
+            "pageToken": None
         }
         body = {
-            "creationDateFrom": datetime.fromisoformat(since).strftime("%Y-%m-%d"),
-            "creationDateTo": datetime.fromisoformat(to).strftime("%Y-%m-%d"),
+            "dates": {
+                "creationDateFrom": datetime.fromisoformat(since).strftime("%Y-%m-%d"),
+                "creationDateTo": datetime.fromisoformat(to).strftime("%Y-%m-%d")
+            }
         }
         while True:
             response = requests.post(API_URL.format(campaign_id=CAMPAIGN_ID), headers=HEADERS, params=params, json=body)
@@ -64,6 +53,8 @@ def fetch_orders_by_month():
 
             params["pageToken"] = next_token
 
+        params.pop("pageToken", None)
+
     return all_orders
 
 
@@ -80,11 +71,10 @@ def group_by_month(orders):
             grouped[month_key] = {}
 
         first_item = order.get("items", [{}])[0]
-        print(first_item)
 
-        grouped[month_key][order["orderId"]] = {
+        grouped[month_key][str(order["orderId"])] = {
             "id": str(order["orderId"]),
-            "title": first_item.get("name"),
+            "title": first_item.get("offerName"),
             "article": str(first_item.get("offerId")),
             "price": str(first_item['prices']['payment']['value'] + first_item['prices'].get('subsidy', {}).get('value', 0)),
             "platform": "Yandex Market",
@@ -98,5 +88,3 @@ def group_by_month(orders):
 def process():
     orders = fetch_orders_by_month()
     return group_by_month(orders)
-    # return orders
-print(process())
