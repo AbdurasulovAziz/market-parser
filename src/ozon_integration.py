@@ -26,11 +26,15 @@ def generate_month_ranges(months=3):
     now = datetime.now(timezone.utc)
 
     for i in range(months):
-        first_day = (now.replace(day=1) - timedelta(days=0))  # начинаем с текущего месяца
+        # вычисляем первый день месяца
+        first_day = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         for _ in range(i):
-            first_day = (first_day - timedelta(days=1)).replace(day=1)
+            # идём в предыдущий месяц
+            first_day = (first_day - timedelta(days=1)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-        last_day = (first_day.replace(day=28) + timedelta(days=4)).replace(day=1)
+        # последний день месяца
+        last_day = (first_day.replace(day=28) + timedelta(days=4))  # всегда переходит в следующий месяц
+        last_day = (last_day - timedelta(days=1)).replace(hour=23, minute=59, second=59, microsecond=0)
 
         yield (
             first_day.strftime("%Y-%m-%dT%H:%M:%SZ"),
