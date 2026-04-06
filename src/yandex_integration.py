@@ -33,8 +33,8 @@ def fetch_orders_by_month():
         }
         body = {
             "dates": {
-                "creationDateFrom": datetime.fromisoformat(since).strftime("%Y-%m-%d"),
-                "creationDateTo": datetime.fromisoformat(to).strftime("%Y-%m-%d")
+                "creationDateFrom": datetime.fromisoformat(since.rstrip('Z')).strftime("%Y-%m-%d"),
+                "creationDateTo": datetime.fromisoformat(to.rstrip('Z')).strftime("%Y-%m-%d")
             }
         }
         while True:
