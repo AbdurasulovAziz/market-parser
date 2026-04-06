@@ -1,3 +1,4 @@
+import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Header, UploadFile, File
 import os
@@ -50,3 +51,6 @@ async def update_env(
             f.write(f"{key}={value}\n")
 
     return {"status": "success"}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8002)
