@@ -4,7 +4,11 @@ import os
 import json
 
 load_dotenv()
-app = FastAPI()
+app = FastAPI(
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
+)
 
 @app.post("/update-env")
 async def update_env(
